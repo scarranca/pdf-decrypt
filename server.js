@@ -19,7 +19,7 @@ app.get("/health", (req, res) => {
 
 app.post("/extract-pdfs", (req, res) => {
   try {
-    const { zipBase64 } = req.body || {};
+    const { zipBase64, returnBase64 } = req.body || {};
 
     if (!zipBase64) {
       return res.status(400).json({
@@ -41,6 +41,23 @@ app.post("/extract-pdfs", (req, res) => {
       return res.status(404).json({
         error: "No PDF files found in ZIP",
       });
+    }
+
+    // Mirror /unlock semantics:
+    // - If !returnBase64: send binary
+    // - Else: send JSON with base64
+    if (!returnBase64) {
+      // If there's only one PDF, send it directly.
+      // If multiple, send the first one (simple, consistent behavior).
+      const first = pdfEntries[0];
+      const buffer = first.getData();
+
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename=${path.basename(first.entryName)}`
+      );
+      return res.send(buffer);
     }
 
     const files = pdfEntries.map((entry) => ({
