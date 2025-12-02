@@ -34,7 +34,7 @@ app.post("/unlock", (req, res) => {
 
     execFile(
       "qpdf",
-      ["--password", password, "--decrypt", inputPath, outputPath],
+      [`--password=${password}`, "--decrypt", inputPath, outputPath],
       (err, stdout, stderr) => {
         if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
 
